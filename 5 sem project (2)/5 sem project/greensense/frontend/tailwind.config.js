@@ -1,11 +1,5 @@
 /** @type {import('tailwindcss').Config} */
 export default {
-  content: [
-    // This array tells Tailwind to scan all React and JavaScript files in the src directory
-    // for classes so it can generate the correct output CSS.
-    "./index.html",
-    "./src/**/*.{js,ts,jsx,tsx}",
-  ],
   theme: {
     extend: {
       // Custom colors if you need them, but the emerald shades are standard
@@ -26,5 +20,4 @@ export default {
       }
     },
   },
-  plugins: [],
 }
