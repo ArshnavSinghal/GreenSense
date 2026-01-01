@@ -1,0 +1,309 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>GreenSense API Test</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 20px;
+            background-color: #f5f5f5;
+        }
+        .container {
+            background: white;
+            padding: 20px;
+            border-radius: 8px;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+            margin-bottom: 20px;
+        }
+        .endpoint {
+            margin-bottom: 15px;
+            padding: 15px;
+            border: 1px solid #ddd;
+            border-radius: 5px;
+            background-color: #f9f9f9;
+        }
+        .endpoint h3 {
+            margin: 0 0 10px 0;
+            color: #2c5530;
+        }
+        .test-btn {
+            background-color: #4CAF50;
+            color: white;
+            padding: 8px 16px;
+            border: none;
+            border-radius: 4px;
+            cursor: pointer;
+            margin-right: 10px;
+        }
+        .test-btn:hover {
+            background-color: #45a049;
+        }
+        .result {
+            margin-top: 10px;
+            padding: 10px;
+            border-radius: 4px;
+            font-family: monospace;
+            font-size: 12px;
+            white-space: pre-wrap;
+            max-height: 300px;
+            overflow-y: auto;
+        }
+        .success {
+            background-color: #d4edda;
+            border: 1px solid #c3e6cb;
+            color: #155724;
+        }
+        .error {
+            background-color: #f8d7da;
+            border: 1px solid #f5c6cb;
+            color: #721c24;
+        }
+        .loading {
+            background-color: #fff3cd;
+            border: 1px solid #ffeaa7;
+            color: #856404;
+        }
+        .city-input {
+            padding: 5px;
+            margin-right: 10px;
+            border: 1px solid #ddd;
+            border-radius: 3px;
+        }
+        .header {
+            text-align: center;
+            color: #2c5530;
+            margin-bottom: 30px;
+        }
+        .status-indicator {
+            display: inline-block;
+            width: 10px;
+            height: 10px;
+            border-radius: 50%;
+            margin-right: 5px;
+        }
+        .status-online {
+            background-color: #4CAF50;
+        }
+        .status-offline {
+            background-color: #f44336;
+        }
+    </style>
+</head>
+<body>
+    <div class="header">
+        <h1>🌱 GreenSense API Test Dashboard</h1>
+        <p>Test all API endpoints to verify real data integration</p>
+    </div>
+
+    <div class="container">
+        <h2>Backend Status</h2>
+        <div class="endpoint">
+            <h3><span id="status-indicator" class="status-indicator status-offline"></span>Node.js Backend (Port 3000)</h3>
+            <button class="test-btn" onclick="testStatus()">Test Status</button>
+            <div id="status-result" class="result" style="display: none;"></div>
+        </div>
+    </div>
+
+    <div class="container">
+        <h2>Environmental Data APIs</h2>
+        
+        <div class="endpoint">
+            <h3>🌫️ Air Quality Index (AQI)</h3>
+            <input type="text" id="aqi-city" class="city-input" value="Mumbai" placeholder="Enter city">
+            <button class="test-btn" onclick="testAQI()">Test AQI</button>
+            <div id="aqi-result" class="result" style="display: none;"></div>
+        </div>
+
+        <div class="endpoint">
+            <h3>⚡ Carbon Emissions (with Breakdown)</h3>
+            <input type="text" id="carbon-city" class="city-input" value="Delhi" placeholder="Enter city">
+            <button class="test-btn" onclick="testCarbon()">Test Carbon</button>
+            <div id="carbon-result" class="result" style="display: none;"></div>
+        </div>
+
+        <div class="endpoint">
+            <h3>💧 Water Stress Index</h3>
+            <input type="text" id="water-city" class="city-input" value="Chennai" placeholder="Enter city">
+            <button class="test-btn" onclick="testWater()">Test Water</button>
+            <div id="water-result" class="result" style="display: none;"></div>
+        </div>
+
+        <div class="endpoint">
+            <h3>🌳 NDVI Vegetation Analysis</h3>
+            <input type="text" id="ndvi-area" class="city-input" value="Amazon-Basin-01" placeholder="Enter area ID">
+            <button class="test-btn" onclick="testNDVI()">Test NDVI</button>
+            <div id="ndvi-result" class="result" style="display: none;"></div>
+        </div>
+
+        <div class="endpoint">
+            <h3>📊 Pollution Forecast</h3>
+            <input type="text" id="forecast-city" class="city-input" value="Bangalore" placeholder="Enter city">
+            <button class="test-btn" onclick="testForecast()">Test Forecast</button>
+            <div id="forecast-result" class="result" style="display: none;"></div>
+        </div>
+
+        <div class="endpoint">
+            <h3>💡 Environmental Recommendations</h3>
+            <input type="text" id="rec-city" class="city-input" value="Kolkata" placeholder="Enter city">
+            <button class="test-btn" onclick="testRecommendations()">Test Recommendations</button>
+            <div id="rec-result" class="result" style="display: none;"></div>
+        </div>
+    </div>
+
+    <div class="container">
+        <h2>Batch Operations</h2>
+        
+        <div class="endpoint">
+            <h3>🔄 Test All APIs</h3>
+            <button class="test-btn" onclick="testAllAPIs()">Run All Tests</button>
+            <div id="batch-result" class="result" style="display: none;"></div>
+        </div>
+    </div>
+
+    <script>
+        const API_BASE = 'http://localhost:3000/api';
+
+        async function makeRequest(url, options = {}) {
+            try {
+                const response = await fetch(url, options);
+                const data = await response.json();
+                return { success: response.ok, data, status: response.status };
+            } catch (error) {
+                return { success: false, error: error.message, status: 0 };
+            }
+        }
+
+        function showResult(elementId, result) {
+            const element = document.getElementById(elementId);
+            element.style.display = 'block';
+            
+            if (result.success) {
+                element.className = 'result success';
+                element.textContent = JSON.stringify(result.data, null, 2);
+            } else {
+                element.className = 'result error';
+                element.textContent = `Error: ${result.error || 'Request failed'}\nStatus: ${result.status}`;
+            }
+        }
+
+        function showLoading(elementId) {
+            const element = document.getElementById(elementId);
+            element.style.display = 'block';
+            element.className = 'result loading';
+            element.textContent = 'Loading...';
+        }
+
+        async function testStatus() {
+            showLoading('status-result');
+            const result = await makeRequest(`${API_BASE}/status`);
+            showResult('status-result', result);
+            
+            // Update status indicator
+            const indicator = document.getElementById('status-indicator');
+            if (result.success) {
+                indicator.className = 'status-indicator status-online';
+            } else {
+                indicator.className = 'status-indicator status-offline';
+            }
+        }
+
+        async function testAQI() {
+            const city = document.getElementById('aqi-city').value || 'Mumbai';
+            showLoading('aqi-result');
+            const result = await makeRequest(`${API_BASE}/aqi/${encodeURIComponent(city)}`);
+            showResult('aqi-result', result);
+        }
+
+        async function testCarbon() {
+            const city = document.getElementById('carbon-city').value || 'Delhi';
+            showLoading('carbon-result');
+            const result = await makeRequest(`${API_BASE}/carbon/${encodeURIComponent(city)}`);
+            showResult('carbon-result', result);
+        }
+
+        async function testWater() {
+            const city = document.getElementById('water-city').value || 'Chennai';
+            showLoading('water-result');
+            const result = await makeRequest(`${API_BASE}/water/${encodeURIComponent(city)}`);
+            showResult('water-result', result);
+        }
+
+        async function testNDVI() {
+            const area = document.getElementById('ndvi-area').value || 'Amazon-Basin-01';
+            showLoading('ndvi-result');
+            const result = await makeRequest(`${API_BASE}/ndvi/${encodeURIComponent(area)}`);
+            showResult('ndvi-result', result);
+        }
+
+        async function testForecast() {
+            const city = document.getElementById('forecast-city').value || 'Bangalore';
+            showLoading('forecast-result');
+            const result = await makeRequest(`${API_BASE}/forecast/pollution/${encodeURIComponent(city)}`);
+            showResult('forecast-result', result);
+        }
+
+        async function testRecommendations() {
+            const city = document.getElementById('rec-city').value || 'Kolkata';
+            showLoading('rec-result');
+            const result = await makeRequest(`${API_BASE}/recommendations?city=${encodeURIComponent(city)}&risk=0.8`);
+            showResult('rec-result', result);
+        }
+
+        async function testAllAPIs() {
+            showLoading('batch-result');
+            
+            const tests = [
+                { name: 'Status', fn: () => makeRequest(`${API_BASE}/status`) },
+                { name: 'AQI (Mumbai)', fn: () => makeRequest(`${API_BASE}/aqi/Mumbai`) },
+                { name: 'Carbon (Delhi)', fn: () => makeRequest(`${API_BASE}/carbon/Delhi`) },
+                { name: 'Water (Chennai)', fn: () => makeRequest(`${API_BASE}/water/Chennai`) },
+                { name: 'NDVI (Amazon)', fn: () => makeRequest(`${API_BASE}/ndvi/Amazon-Basin-01`) },
+                { name: 'Forecast (Bangalore)', fn: () => makeRequest(`${API_BASE}/forecast/pollution/Bangalore`) },
+                { name: 'Recommendations (Kolkata)', fn: () => makeRequest(`${API_BASE}/recommendations?city=Kolkata&risk=0.8`) }
+            ];
+
+            const results = [];
+            
+            for (const test of tests) {
+                const result = await test.fn();
+                results.push({
+                    name: test.name,
+                    success: result.success,
+                    status: result.status,
+                    error: result.error
+                });
+            }
+
+            const element = document.getElementById('batch-result');
+            element.style.display = 'block';
+            
+            const successCount = results.filter(r => r.success).length;
+            const totalCount = results.length;
+            
+            if (successCount === totalCount) {
+                element.className = 'result success';
+            } else {
+                element.className = 'result error';
+            }
+            
+            let output = `Batch Test Results: ${successCount}/${totalCount} passed\n\n`;
+            results.forEach(result => {
+                output += `${result.success ? '✅' : '❌'} ${result.name} - Status: ${result.status}`;
+                if (result.error) output += ` - Error: ${result.error}`;
+                output += '\n';
+            });
+            
+            element.textContent = output;
+        }
+
+        // Auto-test status on page load
+        window.onload = function() {
+            testStatus();
+        };
+    </script>
+</body>
+</html>
